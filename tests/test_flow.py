@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime
 
+import storey
 from storey import build_flow, Source, Map, Filter, FlatMap, Reduce, FlowError, MapWithState, ReadCSV, Complete, AsyncSource
 
 
@@ -259,3 +260,30 @@ async def async_test_error_async_flow():
 def test_error_async_flow():
     loop = asyncio.new_event_loop()
     loop.run_until_complete(async_test_error_async_flow())
+
+
+class MyClass:
+    def do(self, x):
+        print('X=', str(x))
+        return x
+
+
+def test_yaron():
+    def functional_flow():
+        controller = build_flow([
+            Source(),
+            Map(lambda x: x + 1),
+            Filter(lambda x: x < 5),
+            FlatMap(lambda x: [x, x * 10]),
+            storey.flow.MapClass(MyClass),
+            Reduce(0, lambda acc, x: acc + x),
+        ]).run()
+        for i in range(10):
+            # print('in:', i)
+            controller.emit(i)
+        controller.terminate()
+        termination_result = controller.await_termination()
+        print(termination_result)
+        # assert termination_result == 3300
+
+    functional_flow()

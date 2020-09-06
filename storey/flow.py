@@ -349,6 +349,16 @@ class UnaryFunctionFlow(Flow):
             await self._do_internal(event, fn_result)
 
 
+class MapClass(UnaryFunctionFlow):
+    def __init__(self, class_object=None, class_params={}, **kwargs):
+        fn = class_object(**class_params).do
+        super().__init__(fn, **kwargs)
+
+    async def _do_internal(self, event, mapped_element):
+        mapped_event = Event(mapped_element, event.key, event.time, event.awaitable_result)
+        await self._do_downstream(mapped_event)
+
+
 class Map(UnaryFunctionFlow):
     async def _do_internal(self, event, mapped_element):
         mapped_event = Event(mapped_element, event.key, event.time, event.awaitable_result)
